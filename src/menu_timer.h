@@ -4,7 +4,7 @@
 #include "entete.h"
 #include "globals.h"
 #include "button.h"
-extern int timezoneOffset;
+int timezoneOffset =2;
 // Déclaration des boutons pour réinitialiser les timers
 Button btnResetTotal(65, 70, 80, 60, "Reset");      // Bouton pour réinitialiser le timer total
 Button btnResetJournalier(150, 70, 80, 60, "Reset");  // Bouton pour réinitialiser le timer journalier

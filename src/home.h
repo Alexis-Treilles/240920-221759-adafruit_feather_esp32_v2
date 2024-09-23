@@ -10,7 +10,12 @@
 #include "menu_debug.h"
 #include "menu_features.h"
 #include "entete.h"
-
+extern float currentLatitude;
+extern float currentLongitude;
+extern int currentSatellites;
+extern String currentTime;
+double currentAltitude = 0;
+String currentDate = "";
 // Déclaration des boutons
 Button btnRoulage = {65, 5, 122, 75, "Roulage"};
 Button btnBluetooth = {192, 5, 122, 75, "Bluetooth"};
@@ -30,6 +35,15 @@ void displayHome() {
   drawButton(tft, btnTimer);
   drawButton(tft, btnDebug);
   drawButton(tft, btnFeatures);
+
+  // Afficher les informations GPS
+  tft.setTextColor(TFT_WHITE);
+  tft.drawString("Satellites: " + String(currentSatellites), 10, 240);  // Affiche le nombre de satellites
+  tft.drawString("Lat: " + String(currentLatitude, 6), 10, 260);       // Affiche la latitude
+  tft.drawString("Lon: " + String(currentLongitude, 6), 10, 280);      // Affiche la longitude
+  tft.drawString("Alt: " + String(currentAltitude, 2) + "m", 10, 300);  // Affiche l'altitude
+  tft.drawString("Heure: " + currentTime, 10, 320);                     // Affiche l'heure
+  tft.drawString("Date: " + currentDate, 10, 340);                      // Affiche la date
 }
 
 void checkHomeTouch(uint16_t t_x, uint16_t t_y) {

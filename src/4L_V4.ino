@@ -9,6 +9,7 @@
 #include "temp.h"
 #include "gps.h"    // Inclure le fichier pour la mise à jour des données GPS
 #include <TinyGPS++.h>     // Bibliothèque GPS
+#include "log.h"           // Inclure le fichier log pour la journalisation
 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
@@ -23,24 +24,22 @@ bool deviceConnected = false;
 int currentTemperature = 99;    // Valeur par défaut pour la température (ex. : -127 pour indiquer que le capteur n'a pas encore donné de valeur valide)
 float currentLatitude = 0.0;    // Latitude par défaut
 float currentLongitude = 0.0;   // Longitude par défaut
+float currentSpeed = 0.0;       // Vitesse par défaut
 
-// Définir la variable globale pour stocker la page courante
 Page currentPage = PAGE_HOME;
 
-// Créer une instance de TinyGPS++
 TinyGPSPlus gps;
-
-// Déclarer le port série pour la communication avec le module GPS (définir les broches selon ton câblage)
 HardwareSerial SerialGPS(1);
 #define RXPin 16
 #define TXPin 17
 
 unsigned long previousMillisDebug = 0;
 unsigned long previousMillisTemp = 0;
-unsigned long previousMillisGPS = 0;
+unsigned long previousMillisGPSAndLog = 0;  // Utilisé pour la mise à jour GPS et log
+
 const long intervalDebug = 1000;   // Intervalle pour actualiser le menu debug
 const long intervalTemp = 10000;   // Intervalle pour actualiser la température
-const long intervalGPS = 5000;     // Intervalle pour actualiser les données GPS toutes les 5 secondes
+const long intervalGPSAndLog = 5000;  // Intervalle combiné pour GPS et log (toutes les 5 secondes)
 
 void setup() {
   tft.init();
@@ -52,6 +51,9 @@ void setup() {
   sensors.begin();       // Initialiser le capteur DS18B20
   SerialGPS.begin(9600, SERIAL_8N1, RXPin, TXPin);  // Initialiser le GPS
   displayHome();         // Afficher le menu home par défaut
+
+  // Initialiser la journalisation avec la date actuelle (remplacez par des valeurs réelles)
+  initLogFile(gps.date.day(), gps.date.month(), gps.date.year());
 }
 
 void loop() {
@@ -96,16 +98,9 @@ void loop() {
     updateTemperature();  // Mettre à jour la température
   }
 
-  // Mettre à jour les données GPS toutes les 5 secondes
-  if (currentMillis - previousMillisGPS >= intervalGPS) {
-    previousMillisGPS = currentMillis;
-
-    // Lire les données GPS
-    while (SerialGPS.available() > 0) {
-      gps.encode(SerialGPS.read());
-    }
-
-    // Mettre à jour les informations GPS
-    updateGPSData();
+  // Mettre à jour les données GPS et enregistrer les logs toutes les 5 secondes
+  if (currentMillis - previousMillisGPSAndLog >= intervalGPSAndLog) {
+    previousMillisGPSAndLog = currentMillis;
+    processAndLogGPSData(gps, SerialGPS);
   }
 }

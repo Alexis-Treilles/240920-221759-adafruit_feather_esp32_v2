@@ -13,16 +13,19 @@ enum Page {
   PAGE_FEATURES
 };
 // Variables globales à utiliser dans tout le programme
-extern String currentTime;       // Heure actuelle sous forme de chaîne
-extern int currentSatellites;    // Nombre de satellites actuels
 extern int currentTemperature;   // Température actuelle sous forme d'entier
 extern bool deviceConnected;     // Statut de la connexion Bluetooth
 extern bool buttonPreviousPressed;
 extern bool buttonPlayPausePressed;
 extern bool buttonNextPressed;
+
+extern String currentTime;       // Heure actuelle sous forme de chaîne
+extern String currentDate;
+extern int currentSatellites;    // Nombre de satellites actuels
 extern float currentLatitude;
 extern float currentLongitude;  
-
+extern int timezoneOffset;  // Déclaration de la variable globale timezoneOffset
+extern double currentAltitude;
 
 // Variable globale pour stocker la page actuelle
 extern Page currentPage;
