@@ -8,7 +8,7 @@
 extern TinyGPSPlus gps;
 
 // Déclarer la variable externe pour le décalage horaire (par défaut à +2)
-int timezoneOffset = 2;  // Par défaut, décalage de 2 heures
+extern int timezoneOffset;  // Déclaration de la variable globale timezoneOffset
 
 // Fonction pour mettre à jour les informations GPS
 void updateGPSData() {
@@ -23,6 +23,11 @@ void updateGPSData() {
     currentLongitude = gps.location.lng();
   }
 
+  // Met à jour l'altitude si valide
+  if (gps.altitude.isValid()) {
+    currentAltitude = gps.altitude.meters();
+  }
+
   // Met à jour l'heure si elle est valide
   if (gps.time.isValid()) {
     int hour = gps.time.hour() + timezoneOffset;  // Ajoute le décalage horaire
@@ -34,9 +39,16 @@ void updateGPSData() {
       hour += 24;
     }
 
-    char timeBuffer[6]; // Stockage temporaire pour l'heure formatée
+    char timeBuffer[6];  // Stockage temporaire pour l'heure formatée
     sprintf(timeBuffer, "%02d:%02d", hour, gps.time.minute());
     currentTime = String(timeBuffer);  // Met à jour l'heure globale au format "HH:MM"
+  }
+
+  // Met à jour la date si elle est valide
+  if (gps.date.isValid()) {
+    char dateBuffer[11];  // Stockage temporaire pour la date formatée
+    sprintf(dateBuffer, "%02d/%02d/%04d", gps.date.day(), gps.date.month(), gps.date.year());
+    currentDate = String(dateBuffer);  // Met à jour la date globale au format "DD/MM/YYYY"
   }
 }
 
