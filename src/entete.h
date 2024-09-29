@@ -33,6 +33,12 @@ void drawEntete() {
       currentTemperature != lastTemperature || deviceConnected != lastDeviceConnected ||
       currentPage != lastPage) {
 
+    // Imprimer la date et le nombre de satellites dans la console
+    Serial.print("Date actuelle : ");
+    Serial.println(currentTime);  // Affiche l'heure ou la date
+    Serial.print("Nombre de satellites : ");
+    Serial.println(currentSatellites);
+
     // Mettre à jour les anciennes valeurs
     lastTime = currentTime;
     lastSatellites = currentSatellites;

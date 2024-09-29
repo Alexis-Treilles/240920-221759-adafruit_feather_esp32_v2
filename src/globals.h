@@ -26,7 +26,7 @@ extern float currentLatitude;
 extern float currentLongitude;  
 extern int timezoneOffset;  // Déclaration de la variable globale timezoneOffset
 extern double currentAltitude;
-
+extern float currentSpeed;
 // Variable globale pour stocker la page actuelle
 extern Page currentPage;
 

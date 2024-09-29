@@ -1,12 +1,12 @@
-#include <TFT_eSPI.h>
+#include "TFT_eSPI.h"  // Inclure la bibliothèque TFT_eSPI
 #include "globals.h"      // Inclure les variables globales
-#include "home.h"
-#include "menu_fonctionnement.h"
-#include "menu_bluetooth.h"
-#include "menu_gps.h"
-#include "menu_timer.h"
-#include "entete.h"
-#include "temp.h"
+#include "home.h"         // Inclure le menu principal
+#include "menu_fonctionnement.h"   // Inclure le menu Fonctionnement
+#include "menu_bluetooth.h"    // Inclure le menu Bluetooth
+#include "menu_gps.h"   // Inclure le menu GPS
+#include "menu_timer.h" // Inclure le menu Timer
+#include "entete.h"  // Inclure l'entête
+#include "temp.h"    // Inclure le fichier pour la mise à jour des données de température
 #include "gps.h"    // Inclure le fichier pour la mise à jour des données GPS
 #include <TinyGPS++.h>     // Bibliothèque GPS
 #include "log.h"           // Inclure le fichier log pour la journalisation
@@ -47,13 +47,12 @@ void setup() {
   tft.fillScreen(TFT_BLACK);
   tft.setFreeFont(&FreeSerif9pt7b);  // Charger une police plus petite
   Serial.begin(115200);  // Démarrer la communication série pour le débogage
+  void initGPS();
   initBluetooth();
+  initSDCard();  
   sensors.begin();       // Initialiser le capteur DS18B20
   SerialGPS.begin(9600, SERIAL_8N1, RXPin, TXPin);  // Initialiser le GPS
   displayHome();         // Afficher le menu home par défaut
-
-  // Initialiser la journalisation avec la date actuelle (remplacez par des valeurs réelles)
-  initLogFile(gps.date.day(), gps.date.month(), gps.date.year());
 }
 
 void loop() {
@@ -61,6 +60,10 @@ void loop() {
   bool pressed = tft.getTouch(&t_x, &t_y);
   
   if (pressed) {
+    Serial.print("Coordonnées touchées : X = ");
+    Serial.print(t_x);
+    Serial.print(", Y = ");
+    Serial.println(t_y);
     t_x = tft.width() - t_x;
     checkEnteteTouch(t_x, t_y);
 
@@ -80,6 +83,7 @@ void loop() {
   }
 
   // Mettre à jour l'entête en continu
+  updateGPSData();
   drawEntete();
 
   unsigned long currentMillis = millis();
@@ -101,6 +105,6 @@ void loop() {
   // Mettre à jour les données GPS et enregistrer les logs toutes les 5 secondes
   if (currentMillis - previousMillisGPSAndLog >= intervalGPSAndLog) {
     previousMillisGPSAndLog = currentMillis;
-    processAndLogGPSData(gps, SerialGPS);
+    processAndLogGPSData();
   }
 }

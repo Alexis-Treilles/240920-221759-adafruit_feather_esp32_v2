@@ -1,54 +1,68 @@
-#ifndef GPS_UPDATE_H
-#define GPS_UPDATE_H
+#ifndef GPS_H
+#define GPS_H
 
 #include <TinyGPS++.h>
+#include <HardwareSerial.h>
 #include "globals.h"
 
-// Déclarer l'objet GPS
+// Déclarer l'objet GPS et la liaison série GPS
 extern TinyGPSPlus gps;
+extern HardwareSerial SerialGPS;
 
-// Déclarer la variable externe pour le décalage horaire (par défaut à +2)
-extern int timezoneOffset;  // Déclaration de la variable globale timezoneOffset
+// Fonction d'initialisation du GPS
+void initGPS() {
+  // Initialisation de Serial1 pour la communication GPS (RX -> GPIO16, TX -> GPIO17)
+  SerialGPS.begin(9600, SERIAL_8N1, 16, 17);
+  Serial.println("Initialisation du GPS Neo-6M...");
+}
 
-// Fonction pour mettre à jour les informations GPS
+// Fonction de mise à jour des données GPS
 void updateGPSData() {
-  // Met à jour le nombre de satellites si valide
-  if (gps.satellites.isValid()) {
-    currentSatellites = gps.satellites.value();
-  }
-  
-  // Met à jour la latitude et la longitude si valides
-  if (gps.location.isValid()) {
-    currentLatitude = gps.location.lat();
-    currentLongitude = gps.location.lng();
-  }
+  // Vérifie si des données sont disponibles depuis le GPS
+  while (SerialGPS.available() > 0) {
+    // Lire les données GPS et les traiter
+    gps.encode(SerialGPS.read());
 
-  // Met à jour l'altitude si valide
-  if (gps.altitude.isValid()) {
-    currentAltitude = gps.altitude.meters();
-  }
+    // Si une nouvelle position est disponible, met à jour les informations GPS
+    if (gps.location.isUpdated()) {
+      currentLatitude = gps.location.lat();
+      currentLongitude = gps.location.lng();
+      currentSpeed = gps.speed.kmph();
+      currentAltitude = gps.altitude.meters();
 
-  // Met à jour l'heure si elle est valide
-  if (gps.time.isValid()) {
-    int hour = gps.time.hour() + timezoneOffset;  // Ajoute le décalage horaire
-
-    // Ajuster l'heure si elle dépasse 24h ou est inférieure à 0
-    if (hour >= 24) {
-      hour -= 24;
-    } else if (hour < 0) {
-      hour += 24;
+      // Affiche dans la console pour débogage
+      Serial.print("Latitude : ");
+      Serial.println(currentLatitude, 6);
+      Serial.print("Longitude : ");
+      Serial.println(currentLongitude, 6);
+      Serial.print("Vitesse (km/h) : ");
+      Serial.println(currentSpeed);
+      Serial.print("Altitude (m) : ");
+      Serial.println(currentAltitude);
+    }
+    // Mise à jour du nombre de satellites
+    if (gps.satellites.isUpdated()) {
+      currentSatellites = gps.satellites.value();
+      Serial.print("Satellites : ");
+      Serial.println(currentSatellites);
     }
 
-    char timeBuffer[6];  // Stockage temporaire pour l'heure formatée
-    sprintf(timeBuffer, "%02d:%02d", hour, gps.time.minute());
-    currentTime = String(timeBuffer);  // Met à jour l'heure globale au format "HH:MM"
-  }
+    // Met à jour la date et l'heure si disponibles
+    if (gps.date.isUpdated() && gps.time.isUpdated()) {
+      char dateBuffer[11];  // Stockage temporaire pour la date formatée
+      sprintf(dateBuffer, "%02d/%02d/%04d", gps.date.day(), gps.date.month(), gps.date.year());
+      currentDate = String(dateBuffer);
 
-  // Met à jour la date si elle est valide
-  if (gps.date.isValid()) {
-    char dateBuffer[11];  // Stockage temporaire pour la date formatée
-    sprintf(dateBuffer, "%02d/%02d/%04d", gps.date.day(), gps.date.month(), gps.date.year());
-    currentDate = String(dateBuffer);  // Met à jour la date globale au format "DD/MM/YYYY"
+      char timeBuffer[9];  // Stockage temporaire pour l'heure formatée
+      sprintf(timeBuffer, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());
+      currentTime = String(timeBuffer);
+
+      // Affiche la date et l'heure dans la console pour débogage
+      Serial.print("Date : ");
+      Serial.println(currentDate);
+      Serial.print("Heure : ");
+      Serial.println(currentTime);
+    }
   }
 }
 
