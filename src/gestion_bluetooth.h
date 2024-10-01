@@ -102,6 +102,8 @@ void initBluetooth() {
   pAdvertising->start();
 
   Serial.println("Bluetooth HID initialisé avec sécurité et en attente de connexion...");
+  tft.setCursor(120,220);
+  tft.println("BT");
 }
 
 // Fonction pour envoyer une commande multimédia (Play/Pause, Suivant, Précédent)

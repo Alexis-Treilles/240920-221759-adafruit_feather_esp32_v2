@@ -7,7 +7,7 @@
 
 extern void displayHome(); // Déclaration de la fonction displayHome
 extern TFT_eSPI tft;
-
+extern bool sdAvailable;
 // Dimensions de l'entête verticale sur le côté gauche
 #define ENTETE_WIDTH 60
 #define ENTETE_HEIGHT tft.height()
@@ -26,24 +26,20 @@ void drawEntete() {
   static int lastSatellites = -1;
   static int lastTemperature = -1;
   static bool lastDeviceConnected = false;
+  static bool lastSdAvailable = false; // Variable pour l'état de la carte SD
   static Page lastPage = currentPage; // Stocker la dernière page affichée
 
   // Vérifier si une des variables a changé ou si la page a changé
   if (currentTime != lastTime || currentSatellites != lastSatellites ||
       currentTemperature != lastTemperature || deviceConnected != lastDeviceConnected ||
-      currentPage != lastPage) {
-
-    // Imprimer la date et le nombre de satellites dans la console
-    Serial.print("Date actuelle : ");
-    Serial.println(currentTime);  // Affiche l'heure ou la date
-    Serial.print("Nombre de satellites : ");
-    Serial.println(currentSatellites);
+      sdAvailable != lastSdAvailable || currentPage != lastPage) {
 
     // Mettre à jour les anciennes valeurs
     lastTime = currentTime;
     lastSatellites = currentSatellites;
     lastTemperature = currentTemperature;
     lastDeviceConnected = deviceConnected;
+    lastSdAvailable = sdAvailable; // Mettre à jour l'état de la carte SD
     lastPage = currentPage; // Mettre à jour la dernière page
 
     // Dessiner l'entête verticale sur la gauche
@@ -55,22 +51,30 @@ void drawEntete() {
     drawButton(tft, btnMenuPrincipal);
 
     // Affichage de l'heure au milieu
-    tft.setCursor(1, ENTETE_HEIGHT / 2 - 3); // Centré verticalement
-    tft.println(currentTime);
+    tft.setCursor(4, ENTETE_HEIGHT / 2 - 3); // Centré verticalement
+  tft.println(currentTime.substring(0, 5));  // Affiche uniquement les 5 premiers caractères
+
 
     // Affichage de la température sous l'heure
     tft.setCursor(5, 2 * ENTETE_HEIGHT / 3); // Sous l'heure avec un petit écart
     tft.println(String(currentTemperature) + "°C");
 
-    // Nombre de satellites en bas à gauche
-    tft.setCursor(5, ENTETE_HEIGHT - 32); 
-    tft.println(String(currentSatellites));
+    // Nombre de satellites (remonté un peu plus haut)
+    tft.setCursor(5, ENTETE_HEIGHT - 50); 
+    tft.println(String(currentSatellites) + " Sat");
 
     // Statut Bluetooth à droite des satellites
     if (deviceConnected) {
       tft.fillCircle(ENTETE_WIDTH - 15, ENTETE_HEIGHT - 25, 10, TFT_GREEN);
     } else {
       tft.fillCircle(ENTETE_WIDTH - 15, ENTETE_HEIGHT - 25, 10, TFT_RED);
+    }
+
+    // Indicateur de disponibilité de la carte SD à gauche du Bluetooth
+    if (sdAvailable) {
+      tft.fillCircle(ENTETE_WIDTH - 45, ENTETE_HEIGHT - 25, 10, TFT_GREEN); // SD disponible
+    } else {
+      tft.fillCircle(ENTETE_WIDTH - 45, ENTETE_HEIGHT - 25, 10, TFT_RED); // SD non disponible
     }
   }
 }

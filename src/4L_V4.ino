@@ -30,8 +30,7 @@ Page currentPage = PAGE_HOME;
 
 TinyGPSPlus gps;
 HardwareSerial SerialGPS(1);
-#define RXPin 16
-#define TXPin 17
+
 
 unsigned long previousMillisDebug = 0;
 unsigned long previousMillisTemp = 0;
@@ -42,24 +41,19 @@ const long intervalTemp = 10000;   // Intervalle pour actualiser la température
 const long intervalGPSAndLog = 5000;  // Intervalle combiné pour GPS et log (toutes les 5 secondes)
 
 void setup() {
-  tft.init();
-  tft.setRotation(3);    // Orientation horizontale
-  tft.fillScreen(TFT_BLACK);
-  tft.setFreeFont(&FreeSerif9pt7b);  // Charger une police plus petite
-  Serial.begin(115200);  // Démarrer la communication série pour le débogage
-  void initGPS();
-  initBluetooth();
-  initSDCard();  
-  sensors.begin();       // Initialiser le capteur DS18B20
-  SerialGPS.begin(9600, SERIAL_8N1, RXPin, TXPin);  // Initialiser le GPS
-  displayHome();         // Afficher le menu home par défaut
+  Serial.begin(115200);  // Initialiser la communication série
+  tft.init();            // Initialiser l'écran TFT
+  tft.setRotation(3);    // Orientation de l'écran
+  bootSetup();           // Appel de la fonction de démarrage dans boot.h
 }
-
+ uint16_t t_x, t_y; 
 void loop() {
-  uint16_t t_x = 0, t_y = 0; // Pour stocker les coordonnées tactiles
-  bool pressed = tft.getTouch(&t_x, &t_y);
+ // Pour stocker les coordonnées tactiles
   
-  if (pressed) {
+  
+  //Serial.println("Avant getTouch");
+  if (tft.getTouch(&t_x, &t_y)) {
+    Serial.println("Touch détecté !");
     Serial.print("Coordonnées touchées : X = ");
     Serial.print(t_x);
     Serial.print(", Y = ");

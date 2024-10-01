@@ -1,5 +1,11 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
+#define SD_CS 5  // Pin Chip Select pour la carte SD
+#define SPI_SCLK 18   // SCLK (Clock) - GPIO 18
+#define SPI_MISO 19   // MISO - GPIO 19
+#define SPI_MOSI 23   // MOSI - GPIO 23
+#define RXPin 16
+#define TXPin 17
 
 // Enumération des différentes pages
 
@@ -36,5 +42,5 @@ extern Page currentPage;
 #include "menu_bluetooth.h"
 #include "menu_gps.h"
 #include "menu_timer.h"
-
+#include "boot.h"
 #endif
