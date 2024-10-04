@@ -77,53 +77,54 @@ void checkDriverSelection(uint16_t t_x, uint16_t t_y) {
 
 // Fonction de démarrage principale qui appelle les initialisations
 void bootSetup() {
-  tft.fillScreen(TFT_WHITE);  // Remplir l'écran avec la couleur blanche
-  tft.setFreeFont(&FreeSerif9pt7b);  // Charger une police plus petite
+    tft.fillScreen(TFT_WHITE);  // Remplir l'écran avec la couleur blanche
+    tft.setFreeFont(&FreeSerif9pt7b);  // Charger une police plus petite
 
-  // Afficher l'image de démarrage
-  displayImage();
-  delay(3000);  // Attendre 3 secondes avant de continuer
+    // Afficher l'image de démarrage
+    displayImage();
+    delay(1000);  // Attendre 1 seconde avant de continuer
 
-  // Appels des fonctions d'initialisation avec des impressions de débogage
-  Serial.println("Initialisation du GPS...");
-  initGPS();  // Initialiser le GPS
-  delay(1000);
-  Serial.println("Initialisation du Bluetooth...");
-  initBluetooth();  // Initialiser le Bluetooth
-  delay(1000);
-  Serial.println("Initialisation de la carte SD...");
-  initSDCard();  // Initialiser la carte SD
-  delay(1000);
-  Serial.println("Initialisation du capteur de température...");
-  sensors.begin();  // Initialiser le capteur DS18B20
-  tft.setCursor(240, 220);
-  tft.println("TMP");
-  delay(1000);
+    // Initialisation des différents composants
+    Serial.println("Initialisation du GPS...");
+    initGPS();  // Initialiser le GPS
+    delay(500);
+    Serial.println("Initialisation du Bluetooth...");
+    initBluetooth();  // Initialiser le Bluetooth
+    delay(500);
+    Serial.println("Initialisation de la carte SD...");
+    initSDCard();  // Initialiser la carte SD
+    delay(500);
+    Serial.println("Initialisation du capteur de température...");
+    sensors.begin();  // Initialiser le capteur DS18B20
+    tft.setCursor(240, 220);
+    tft.println("TMP");
+    delay(500);
 
-  // Afficher le menu "Qui conduit ?"
-  displayDriverSelection();
+    // Afficher le menu "Qui conduit ?"
+    displayDriverSelection();
 
-  // Attendre que l'utilisateur sélectionne un conducteur, sinon passer au menu home
-  unsigned long startTime = millis();
-  while (!driverSelected) {
-    if (millis() - startTime > 10000) {
-      // Si aucun conducteur n'est sélectionné après 10 secondes, afficher le menu home
-      Serial.println("Aucun conducteur sélectionné après 10 secondes. Passage au menu home.");
-      displayHome();
-      return;
+    // Attendre que l'utilisateur sélectionne un conducteur
+    unsigned long startTime = millis();
+    while (!driverSelected) {
+        // Vérification du temps d'attente
+        if (millis() - startTime > 10000) {
+            Serial.println("Aucun conducteur sélectionné après 10 secondes. Passage au menu home.");
+            displayHome();  // Afficher le menu home
+            return;
+        }
+
+        // Vérifier si un toucher tactile a eu lieu pour sélectionner le conducteur
+        uint16_t t_x, t_y;
+        if (tft.getTouch(&t_x, &t_y)) {
+            t_x = TFT_WIDTH - t_x; // Ajuster les coordonnées
+            checkDriverSelection(t_x, t_y); // Vérifier si un bouton est pressé
+        }
     }
 
-    // Vérifier si un toucher tactile a eu lieu pour sélectionner le conducteur
-    uint16_t t_x, t_y;
-    if (tft.getTouch(&t_x, &t_y)) {
-      checkDriverSelection(t_x, t_y);
-    }
-  }
-
-  // Afficher le menu home après sélection
-  Serial.print(driverName);
-  Serial.println(" est sélectionné comme conducteur.");
-  displayHome();  // Afficher le menu home après la sélection du conducteur
+    // Afficher le menu home après sélection
+    Serial.print(driverName);
+    Serial.println(" est sélectionné comme conducteur.");
+    displayHome();  // Afficher le menu home après la sélection du conducteur
 }
 
 #endif  // BOOT_H

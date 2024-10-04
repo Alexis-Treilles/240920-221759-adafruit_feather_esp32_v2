@@ -21,6 +21,7 @@ void initSDCard() {
   if (!SD.begin(SD_CS, SPI, 4000000)) {
     Serial.println("Erreur : carte SD non détectée !");
     while (true);  // Boucle infinie si la carte SD n'est pas détectée
+    //TO DO : gérer le cas où la carte SD n'est pas disponible ( double beep)
   } else {
     Serial.println("Carte SD initialisée avec succès.");
     sdAvailable = true;

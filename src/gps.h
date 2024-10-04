@@ -20,9 +20,10 @@ void initGPS() {
 }
 
 // Fonction de mise à jour des données GPS
+// Fonction de mise à jour des données GPS sans blocage
 void updateGPSData() {
   // Vérifie si des données sont disponibles depuis le GPS
-  while (SerialGPS.available() > 0) {
+  if (SerialGPS.available() > 0) {
     // Lire les données GPS et les traiter
     gps.encode(SerialGPS.read());
 
@@ -47,7 +48,7 @@ void updateGPSData() {
     // Mise à jour du nombre de satellites
     if (gps.satellites.isUpdated()) {
       currentSatellites = gps.satellites.value();
-     // Serial.print("Satellites : ");
+      //Serial.print("Satellites : ");
       //Serial.println(currentSatellites);
     }
 

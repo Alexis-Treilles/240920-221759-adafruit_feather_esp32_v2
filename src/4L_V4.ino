@@ -42,16 +42,15 @@ const long intervalGPSAndLog = 5000;  // Intervalle combiné pour GPS et log (to
 
 void setup() {
   Serial.begin(115200);  // Initialiser la communication série
-  tft.init();            // Initialiser l'écran TFT
+  tft.begin();            // Initialiser l'écran TFT
   tft.setRotation(3);    // Orientation de l'écran
   bootSetup();           // Appel de la fonction de démarrage dans boot.h
 }
  uint16_t t_x, t_y; 
 void loop() {
- // Pour stocker les coordonnées tactiles
-  
-  
-  //Serial.println("Avant getTouch");
+  // Pour stocker les coordonnées tactiles
+
+  // Vérification de la touche
   if (tft.getTouch(&t_x, &t_y)) {
     Serial.println("Touch détecté !");
     Serial.print("Coordonnées touchées : X = ");
@@ -75,30 +74,36 @@ void loop() {
       checkDebugTouch(t_x, t_y);
     }
   }
-
-  // Mettre à jour l'entête en continu
-  updateGPSData();
-  drawEntete();
-
   unsigned long currentMillis = millis();
+  //Serial.print(currentMillis);
+  // Mettre à jour l'entête toutes les secondes
+  if (currentMillis - previousMillisDebug >= 1000) {  // 1000 ms = 1 seconde
+    previousMillisDebug = currentMillis;
+    drawEntete();  // Appel de la fonction pour dessiner l'entête
+  }
+
+  // Mettre à jour les données GPS toutes les 5 secondes
+  if (currentMillis - previousMillisGPSAndLog >= intervalGPSAndLog) {
+    previousMillisGPSAndLog = currentMillis;
+    //processAndLogGPSData();  // Mettre à jour les données GPS et enregistrer les logs
+  }
 
   // Actualisation spécifique pour le menu Debug
   if (currentPage == PAGE_DEBUG) {
     if (currentMillis - previousMillisDebug >= intervalDebug) {
       previousMillisDebug = currentMillis;
-      displayDebug();  // Appel de la fonction pour rafraîchir l'affichage dans le menu debug
+      //displayDebug();  // Appel de la fonction pour rafraîchir l'affichage dans le menu debug
     }
   }
 
   // Mettre à jour la température toutes les 10 secondes
   if (currentMillis - previousMillisTemp >= intervalTemp) {
     previousMillisTemp = currentMillis;
-    updateTemperature();  // Mettre à jour la température
-  }
-
-  // Mettre à jour les données GPS et enregistrer les logs toutes les 5 secondes
-  if (currentMillis - previousMillisGPSAndLog >= intervalGPSAndLog) {
-    previousMillisGPSAndLog = currentMillis;
-    processAndLogGPSData();
+    //updateTemperature();  // Mettre à jour la température
   }
 }
+
+
+
+
+
