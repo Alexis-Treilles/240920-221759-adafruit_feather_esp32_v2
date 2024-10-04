@@ -25,12 +25,12 @@ int currentTemperature = 99;    // Valeur par défaut pour la température (ex. 
 float currentLatitude = 0.0;    // Latitude par défaut
 float currentLongitude = 0.0;   // Longitude par défaut
 float currentSpeed = 0.0;       // Vitesse par défaut
+uint16_t t_x, t_y;
 
 Page currentPage = PAGE_HOME;
 
 TinyGPSPlus gps;
 HardwareSerial SerialGPS(1);
-
 
 unsigned long previousMillisDebug = 0;
 unsigned long previousMillisTemp = 0;
@@ -42,68 +42,84 @@ const long intervalGPSAndLog = 5000;  // Intervalle combiné pour GPS et log (to
 
 void setup() {
   Serial.begin(115200);  // Initialiser la communication série
-  tft.begin();            // Initialiser l'écran TFT
-  tft.setRotation(3);    // Orientation de l'écran
-  bootSetup();           // Appel de la fonction de démarrage dans boot.h
+  initScreenAndTouch();  // Initialiser l'écran et faire la calibration tactile
+  bootSetup();           // Appel de la fonction de démarrage
 }
- uint16_t t_x, t_y; 
-void loop() {
-  // Pour stocker les coordonnées tactiles
 
-  // Vérification de la touche
-  if (tft.getTouch(&t_x, &t_y)) {
+
+
+void loop() {
+  unsigned long currentMillis = millis();
+
+  // Vérification tactile
+  if (tft.getTouch(&t_x, &t_y,200)) {
     Serial.println("Touch détecté !");
     Serial.print("Coordonnées touchées : X = ");
     Serial.print(t_x);
     Serial.print(", Y = ");
     Serial.println(t_y);
-    t_x = tft.width() - t_x;
     checkEnteteTouch(t_x, t_y);
 
-    if (currentPage == PAGE_HOME) {
-      checkHomeTouch(t_x, t_y);
-    } else if (currentPage == PAGE_FONCTIONNEMENT) {
-      checkFonctionnementTouch(t_x, t_y);
-    } else if (currentPage == PAGE_BLUETOOTH) {
-      checkBluetoothTouch(t_x, t_y);
-    } else if (currentPage == PAGE_GPS) {
-      checkGPSTouch(t_x, t_y);
-    } else if (currentPage == PAGE_TIMER) {
-      checkTimerTouch(t_x, t_y);
-    } else if (currentPage == PAGE_DEBUG) {
-      checkDebugTouch(t_x, t_y);
+    switch (currentPage) {
+      case PAGE_HOME:
+        Serial.println("Touch sur PAGE_HOME");
+        checkHomeTouch(t_x, t_y);
+        break;
+      case PAGE_FONCTIONNEMENT:
+        Serial.println("Touch sur PAGE_FONCTIONNEMENT");
+        checkFonctionnementTouch(t_x, t_y);
+        break;
+      case PAGE_BLUETOOTH:
+        Serial.println("Touch sur PAGE_BLUETOOTH");
+        checkBluetoothTouch(t_x, t_y);
+        break;
+      case PAGE_GPS:
+        Serial.println("Touch sur PAGE_GPS");
+        checkGPSTouch(t_x, t_y);
+        break;
+      case PAGE_TIMER:
+        Serial.println("Touch sur PAGE_TIMER");
+        checkTimerTouch(t_x, t_y);
+        break;
+      case PAGE_DEBUG:
+        Serial.println("Touch sur PAGE_DEBUG");
+        checkDebugTouch(t_x, t_y);
+        break;
+      default:
+        Serial.println("Touch sur une page inconnue !");
+        break;
     }
+  } else {
+    //Serial.println("Aucun touch détecté.");
   }
-  unsigned long currentMillis = millis();
-  //Serial.print(currentMillis);
+
   // Mettre à jour l'entête toutes les secondes
   if (currentMillis - previousMillisDebug >= 1000) {  // 1000 ms = 1 seconde
+    //Serial.println("Mise à jour de l'entête...");
     previousMillisDebug = currentMillis;
     drawEntete();  // Appel de la fonction pour dessiner l'entête
   }
 
   // Mettre à jour les données GPS toutes les 5 secondes
   if (currentMillis - previousMillisGPSAndLog >= intervalGPSAndLog) {
+    //Serial.println("Mise à jour des données GPS...");
     previousMillisGPSAndLog = currentMillis;
-    //processAndLogGPSData();  // Mettre à jour les données GPS et enregistrer les logs
+    // processAndLogGPSData();  // Mettre à jour les données GPS et enregistrer les logs
   }
 
   // Actualisation spécifique pour le menu Debug
   if (currentPage == PAGE_DEBUG) {
     if (currentMillis - previousMillisDebug >= intervalDebug) {
+      //Serial.println("Mise à jour du menu Debug...");
       previousMillisDebug = currentMillis;
-      //displayDebug();  // Appel de la fonction pour rafraîchir l'affichage dans le menu debug
+      // displayDebug();  // Appel de la fonction pour rafraîchir l'affichage dans le menu debug
     }
   }
 
   // Mettre à jour la température toutes les 10 secondes
   if (currentMillis - previousMillisTemp >= intervalTemp) {
+    //Serial.println("Mise à jour de la température...");
     previousMillisTemp = currentMillis;
-    //updateTemperature();  // Mettre à jour la température
+    // updateTemperature();  // Mettre à jour la température
   }
 }
-
-
-
-
-

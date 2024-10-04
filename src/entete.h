@@ -92,7 +92,7 @@ void drawEntete() {
       tft.fillCircle(circleX, circleY, 10, TFT_YELLOW); // Cercle jaune
     }
     isOrange = !isOrange; // Alterner l'état de la couleur
-    Serial.println(isOrange);
+    //Serial.println(isOrange);
 }
 
 // Fonction pour gérer les appuis tactiles dans l'entête
