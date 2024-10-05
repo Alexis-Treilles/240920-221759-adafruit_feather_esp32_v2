@@ -7,7 +7,7 @@
 void displayFonctionnement() {
   // Affichage du menu fonctionnement
   tft.fillScreen(TFT_BLACK); // Effacer l'écran  
-
+  drawEntete();
   tft.setTextColor(TFT_WHITE);
   tft.setCursor(50, 50);
   tft.println("Menu Fonctionnement");

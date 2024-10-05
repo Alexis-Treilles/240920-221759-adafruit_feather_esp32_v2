@@ -15,6 +15,8 @@
 #include "log.h"           // Inclure le fichier log pour la journalisation
 #include "intarissables_image.h"  // Inclure le fichier de l'image
 #include "button.h"  // Inclure les boutons pour l'interaction utilisateur
+#include "gestion_timer.h" // Inclure la gestion des timers (ajout)
+
 
 // Boutons pour la sélection du conducteur
 Button btnAlexis(40, 100, 120, 60, "Alexis", TFT_BLUE);  // Bouton pour Alexis
@@ -133,6 +135,8 @@ void bootSetup() {
     delay(500);
     initSDCard();
     delay(500);
+    initTimers();          // Initialiser les timers à partir du fichier CSV ou initialiser à 0
+
     sensors.begin();
     tft.setCursor(240, 220);
     tft.println("TMP");

@@ -7,12 +7,10 @@
 #include "globals.h"
 
 // Déclaration des variables pour la carte SD
-bool sdAvailable = false;  // Variable pour vérifier si la carte SD est initialisée
+bool sdAvailable = false;      // Variable pour suivre l'état actuel
 bool fileCreated = false;  // Variable pour vérifier si le fichier a déjà été créé
 File logFile;
 File gpxFile;
-
-
 
 // Fonction pour initialiser la carte SD avec une fréquence réduite à 4 MHz
 void initSDCard() {
@@ -21,12 +19,9 @@ void initSDCard() {
   if (!SD.begin(SD_CS, SPI, 4000000)) {
     Serial.println("Erreur : carte SD non détectée !");
     while (true);  // Boucle infinie si la carte SD n'est pas détectée
-    //TO DO : gérer le cas où la carte SD n'est pas disponible ( double beep)
   } else {
     Serial.println("Carte SD initialisée avec succès.");
     sdAvailable = true;
-    tft.setCursor(180,220);
-    tft.println("SD");
 
     // Création des dossiers si nécessaire
     if (!SD.exists("/csv")) {
@@ -38,146 +33,53 @@ void initSDCard() {
   }
 }
 
-// Fonction pour supprimer les 3 dernières lignes du fichier GPX si le fichier existe déjà
-void removeLastThreeLines(const char* filename) {
-  if (SD.exists(filename)) {
-    File gpxFile = SD.open(filename, FILE_READ);
-
-    if (!gpxFile) {
-      Serial.println("Erreur : impossible d'ouvrir le fichier GPX !");
-      return;
-    }
-
-    // Lire le fichier dans un buffer et retirer les 3 dernières lignes
-    String fileContent = "";
-    while (gpxFile.available()) {
-      fileContent += char(gpxFile.read());
-    }
-    gpxFile.close();
-
-    // Localiser la dernière balise </trkpt> pour supprimer les lignes finales
-    int lastClosingTag = fileContent.lastIndexOf("</trkpt>");
-    if (lastClosingTag != -1) {
-      fileContent = fileContent.substring(0, lastClosingTag) + "</trkpt>\n";
-    }
-
-    // Réécrire le fichier avec le contenu modifié
-    gpxFile = SD.open(filename, FILE_WRITE);
-    gpxFile.print(fileContent);
-    gpxFile.close();
-
-    Serial.println("Fichier GPX existant : les 3 dernières lignes ont été supprimées.");
-  }
-}
 // Fonction pour créer ou ouvrir les fichiers de log (CSV et GPX)
-void createLogFile() {
+void createLogFiles() {
   if (sdAvailable) {
-    Serial.println("Création des fichiers de log...");
+    // Création d'un fichier CSV et GPX par jour
+    char dateBuffer[20];
+    sprintf(dateBuffer, "%04d-%02d-%02d", gps.date.year(), gps.date.month(), gps.date.day());
 
-    // Formater le nom du fichier CSV avec la date et l'heure actuelle
+    // Formater le nom des fichiers CSV et GPX avec la date
     char csvFilename[50];
-    sprintf(csvFilename, "/csv/%04d-%02d-%02d_%02d-%02d-%02d.csv", 
-            gps.date.year(), gps.date.month(), gps.date.day(), 
-            gps.time.hour(), gps.time.minute(), gps.time.second());
-
-    // Ouvrir ou créer le fichier CSV en mode ajout
-    logFile = SD.open(csvFilename, FILE_APPEND);
-    if (!logFile) {
-      logFile = SD.open(csvFilename, FILE_WRITE);
-      logFile.println("Date,Heure,Latitude,Longitude,Vitesse(km/h),Altitude(m)");
-      Serial.println("Fichier CSV créé.");
-    }
-
-    // Formater le nom du fichier GPX avec la date et l'heure actuelle
     char gpxFilename[50];
-    sprintf(gpxFilename, "/gpx/%04d-%02d-%02d_%02d-%02d-%02d.gpx", 
-            gps.date.year(), gps.date.month(), gps.date.day(), 
-            gps.time.hour(), gps.time.minute(), gps.time.second());
-
-    // Vérifier si le fichier existe
-    if (SD.exists(gpxFilename)) {
-      // Si le fichier existe, ouvrir et supprimer les 3 dernières lignes
-      gpxFile = SD.open(gpxFilename, FILE_APPEND);
-      if (gpxFile) {
-        removeLastThreeLines(gpxFilename);
-      } else {
-        Serial.println("Erreur : impossible d'ouvrir le fichier GPX pour modification !");
-      }
-    } else {
-      // Si le fichier n'existe pas, le créer et ajouter l'en-tête GPX
-      gpxFile = SD.open(gpxFilename, FILE_WRITE);
-      if (gpxFile) {
-        gpxFile.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        gpxFile.println("<gpx version=\"1.1\" creator=\"GPS Logger\" xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\">");
-        gpxFile.println("<trk><name>GPS Log</name><trkseg>");
-        Serial.println("Fichier GPX créé avec l'en-tête.");
-      } else {
-        Serial.println("Erreur : impossible de créer le fichier GPX !");
-      }
-    }
-
-    fileCreated = true;  // Indiquer que les fichiers ont été créés
-  }
-}
-
-/*
-// Fonction pour créer ou ouvrir les fichiers de log (CSV et GPX)
-void createLogFile() {
-  if (sdAvailable) {
-    Serial.println("Création des fichiers de log...");
-
-    // Formater le nom du fichier CSV avec la date actuelle
-    char csvFilename[40];
-    sprintf(csvFilename, "/csv/%04d-%02d-%02d.csv", gps.date.year(), gps.date.month(), gps.date.day());
+    sprintf(csvFilename, "/csv/%s.csv", dateBuffer);
+    sprintf(gpxFilename, "/gpx/%s.gpx", dateBuffer);
 
     // Ouvrir ou créer le fichier CSV en mode ajout
     logFile = SD.open(csvFilename, FILE_APPEND);
     if (!logFile) {
       logFile = SD.open(csvFilename, FILE_WRITE);
-      logFile.println("Date,Heure,Latitude,Longitude,Vitesse(km/h),Altitude(m)");
+      logFile.println("Date,Heure,Latitude,Longitude,Vitesse(km/h),Altitude(m),Température(°C),Satellites");
       Serial.println("Fichier CSV créé.");
     }
 
-    // Formater le nom du fichier GPX avec la date actuelle
-    char gpxFilename[40];
-    sprintf(gpxFilename, "/gpx/%04d-%02d-%02d.gpx", gps.date.year(), gps.date.month(), gps.date.day());
-
-    // Vérifier si le fichier existe
-    if (SD.exists(gpxFilename)) {
-      // Si le fichier existe, ouvrir et supprimer les 3 dernières lignes
-      gpxFile = SD.open(gpxFilename, FILE_APPEND);
-      if (gpxFile) {
-        removeLastThreeLines(gpxFilename);
-      } else {
-        Serial.println("Erreur : impossible d'ouvrir le fichier GPX pour modification !");
-      }
-    } else {
-      // Si le fichier n'existe pas, le créer et ajouter l'en-tête GPX
+    // Ouvrir ou créer le fichier GPX en mode ajout
+    gpxFile = SD.open(gpxFilename, FILE_APPEND);
+    if (!gpxFile) {
       gpxFile = SD.open(gpxFilename, FILE_WRITE);
-      if (gpxFile) {
-        gpxFile.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        gpxFile.println("<gpx version=\"1.1\" creator=\"GPS Logger\" xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\">");
-        gpxFile.println("<trk><name>GPS Log</name><trkseg>");
-        Serial.println("Fichier GPX créé avec l'en-tête.");
-      } else {
-        Serial.println("Erreur : impossible de créer le fichier GPX !");
-      }
+      gpxFile.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+      gpxFile.println("<gpx version=\"1.1\" creator=\"GPS Logger\" xmlns=\"http://www.topografix.com/GPX/1/1\">");
+      gpxFile.println("<trk><name>GPS Log</name><trkseg>");
+      Serial.println("Fichier GPX créé avec l'en-tête.");
     }
 
     fileCreated = true;  // Indiquer que les fichiers ont été créés
   }
 }
-*/
+
 // Fonction pour journaliser les données GPS dans les fichiers CSV et GPX
 void logGPSData() {
-  if (!fileCreated && currentDate != "2000-00-00") {
-    createLogFile();
+  if (!fileCreated && gps.date.isValid()) {
+    createLogFiles();
   }
 
   if (sdAvailable && fileCreated && currentSatellites >= 4) {
     // Écrire les données dans le fichier CSV
-    logFile.printf("%s,%s,%.6f,%.6f,%.2f,%.2f\n", currentDate.c_str(), currentTime.c_str(),
-                   currentLatitude, currentLongitude, gps.speed.kmph(), currentAltitude);
+    logFile.printf("%s,%s,%.6f,%.6f,%.2f,%.2f,%.2f,%d\n", 
+                   currentDate.c_str(), currentTime.c_str(),
+                   currentLatitude, currentLongitude, gps.speed.kmph(), 
+                   currentAltitude, currentTemperature, currentSatellites);
     logFile.flush();  // Assurez-vous que les données sont bien écrites
 
     // Écrire les données dans le fichier GPX
@@ -186,8 +88,6 @@ void logGPSData() {
     gpxFile.printf("<time>%sT%sZ</time>\n", currentDate.c_str(), currentTime.c_str());  // Format ISO 8601
     gpxFile.println("</trkpt>");
     gpxFile.flush();
-  } else if (currentDate == "2000-00-00") {
-    Serial.println("Date invalide, en attente de données GPS valides pour créer le fichier.");
   }
 }
 
@@ -210,6 +110,33 @@ void processAndLogGPSData() {
 
   // Journaliser les données GPS dans les fichiers CSV et GPX
   logGPSData();
+}
+
+bool restartSD() {
+  bool sdAvailable = SD.exists("/");
+
+  // Si la carte SD n'est plus disponible, tenter de réinitialiser la carte SD
+  if (sdAvailable == false) {
+    Serial.println("Carte SD non disponible, tentative de réinitialisation...");
+    
+    // Forcer la désactivation de la carte SD
+    SD.end();
+    delay(500);  // Attendre un peu avant de réinitialiser
+    
+    // Réinitialiser la carte SD
+    if (SD.begin(SD_CS, SPI, 4000000)) {
+      sdAvailable = SD.exists("/");  // Mise à jour après tentative d'initialisation
+      if (sdAvailable) {
+        Serial.println("Carte SD réinitialisée avec succès.");
+        ESP.restart();  // Redémarrer l'ESP
+      }
+    } else {
+      Serial.println("Échec de l'initialisation de la carte SD après réinsertion.");
+      sdAvailable = false;
+    }
+  }
+
+  return sdAvailable;
 }
 
 #endif

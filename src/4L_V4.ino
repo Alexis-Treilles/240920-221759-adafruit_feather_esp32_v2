@@ -10,6 +10,8 @@
 #include "gps.h"    // Inclure le fichier pour la mise à jour des données GPS
 #include <TinyGPS++.h>     // Bibliothèque GPS
 #include "log.h"           // Inclure le fichier log pour la journalisation
+#include "gestion_timer.h" // Inclure la gestion des timers (ajout)
+
 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
@@ -35,10 +37,12 @@ HardwareSerial SerialGPS(1);
 unsigned long previousMillisDebug = 0;
 unsigned long previousMillisTemp = 0;
 unsigned long previousMillisGPSAndLog = 0;  // Utilisé pour la mise à jour GPS et log
+unsigned long previousMillisTimers = 0;  // Utilisé pour l'enregistrement des timers dans le CSV
 
 const long intervalDebug = 1000;   // Intervalle pour actualiser le menu debug
 const long intervalTemp = 10000;   // Intervalle pour actualiser la température
 const long intervalGPSAndLog = 5000;  // Intervalle combiné pour GPS et log (toutes les 5 secondes)
+const long intervalTimers = 60000;  // Intervalle pour l'enregistrement des timers (5 minutes)
 
 void setup() {
   Serial.begin(115200);  // Initialiser la communication série
@@ -50,7 +54,14 @@ void setup() {
 
 void loop() {
   unsigned long currentMillis = millis();
+  // Vérification en continu de la disponibilité de la carte SD
+  sdAvailable = restartSD();
 
+
+  // Mise à jour de l'état précédent de la carte SD
+  sdWasAvailable = sdAvailable;
+  
+  
   // Vérification tactile
   if (tft.getTouch(&t_x, &t_y,200)) {
     Serial.println("Touch détecté !");
@@ -84,6 +95,9 @@ void loop() {
       case PAGE_DEBUG:
         Serial.println("Touch sur PAGE_DEBUG");
         checkDebugTouch(t_x, t_y);
+      case PAGE_CONFIRMATION:
+        Serial.println("Touch sur PAGE_CONFIRMATION");
+        checkConfirmationTouch (t_x, t_y);
         break;
       default:
         Serial.println("Touch sur une page inconnue !");
@@ -104,7 +118,7 @@ void loop() {
   if (currentMillis - previousMillisGPSAndLog >= intervalGPSAndLog) {
     //Serial.println("Mise à jour des données GPS...");
     previousMillisGPSAndLog = currentMillis;
-    // processAndLogGPSData();  // Mettre à jour les données GPS et enregistrer les logs
+    processAndLogGPSData();  // Mettre à jour les données GPS et enregistrer les logs
   }
 
   // Actualisation spécifique pour le menu Debug
@@ -112,7 +126,7 @@ void loop() {
     if (currentMillis - previousMillisDebug >= intervalDebug) {
       //Serial.println("Mise à jour du menu Debug...");
       previousMillisDebug = currentMillis;
-      // displayDebug();  // Appel de la fonction pour rafraîchir l'affichage dans le menu debug
+      displayDebug();  // Appel de la fonction pour rafraîchir l'affichage dans le menu debug
     }
   }
 
@@ -120,6 +134,13 @@ void loop() {
   if (currentMillis - previousMillisTemp >= intervalTemp) {
     //Serial.println("Mise à jour de la température...");
     previousMillisTemp = currentMillis;
-    // updateTemperature();  // Mettre à jour la température
+    updateTemperature();  // Mettre à jour la température
+  }
+  // Mettre à jour et enregistrer les timers toutes les 5 minutes
+  if (currentMillis - previousMillisTimers >= intervalTimers) {
+    previousMillisTimers = currentMillis;
+    updateTimers();  // Mettre à jour les timers (en fonction du conducteur actuel)
+    logTimers();     // Enregistrer les valeurs actuelles des timers dans le fichier CSV
+    updateGPSData(); // Mettre à jour et enregistration
   }
 }

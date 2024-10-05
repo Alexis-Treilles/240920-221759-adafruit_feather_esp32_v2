@@ -16,7 +16,8 @@ enum Page {
   PAGE_GPS,
   PAGE_TIMER,
   PAGE_DEBUG,
-  PAGE_FEATURES
+  PAGE_FEATURES,
+  PAGE_CONFIRMATION
 };
 // Variables globales à utiliser dans tout le programme
 extern int currentTemperature;   // Température actuelle sous forme d'entier
@@ -25,6 +26,7 @@ extern bool buttonPreviousPressed;
 extern bool buttonPlayPausePressed;
 extern bool buttonNextPressed;
 
+extern String currentDriver;  // Déclarer currentDriver comme chaîne de caractères
 extern String currentTime;       // Heure actuelle sous forme de chaîne
 extern String currentDate;
 extern int currentSatellites;    // Nombre de satellites actuels

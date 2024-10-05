@@ -12,18 +12,22 @@ extern int timezoneOffset;  // Déclaration de la variable pour le décalage hor
 
 // Fonction d'initialisation du GPS
 void initGPS() {
-  // Initialisation de Serial1 pour la communication GPS (RX -> GPIO16, TX -> GPIO17)
+  // Initialisation de Serial1 pour la communication GPS
   SerialGPS.begin(9600, SERIAL_8N1, 16, 17);
   Serial.println("Initialisation du GPS Neo-6M...");
-  tft.setCursor(60,220);
-  tft.println("GPS");
+  if (SerialGPS) {
+    Serial.println("Port série GPS initialisé avec succès.");
+  } else {
+    Serial.println("Échec de l'initialisation du port série GPS.");
+  }
 }
 
-// Fonction de mise à jour des données GPS
 // Fonction de mise à jour des données GPS sans blocage
 void updateGPSData() {
   // Vérifie si des données sont disponibles depuis le GPS
+  Serial.println("Mise à jour des données GPS...");
   if (SerialGPS.available() > 0) {
+    Serial.println("Données GPS disponibles");
     // Lire les données GPS et les traiter
     gps.encode(SerialGPS.read());
 
@@ -35,21 +39,21 @@ void updateGPSData() {
       currentAltitude = gps.altitude.meters();
 
       // Affiche dans la console pour débogage
-      //Serial.println(currentAltitude);
-      //Serial.print("Latitude : ");
-      //Serial.println(currentLatitude, 6);
-      //Serial.print("Longitude : ");
-      //Serial.println(currentLongitude, 6);
-      //Serial.print("Vitesse (km/h) : ");
-      //Serial.println(currentSpeed);
-      //Serial.print("Altitude (m) : ");
+      Serial.print("Latitude : ");
+      Serial.println(currentLatitude, 6);
+      Serial.print("Longitude : ");
+      Serial.println(currentLongitude, 6);
+      Serial.print("Vitesse (km/h) : ");
+      Serial.println(currentSpeed);
+      Serial.print("Altitude (m) : ");
+      Serial.println(currentAltitude);
     }
 
     // Mise à jour du nombre de satellites
     if (gps.satellites.isUpdated()) {
       currentSatellites = gps.satellites.value();
-      //Serial.print("Satellites : ");
-      //Serial.println(currentSatellites);
+      Serial.print("Satellites : ");
+      Serial.println(currentSatellites);
     }
 
     // Met à jour la date et l'heure si disponibles
@@ -71,11 +75,13 @@ void updateGPSData() {
       currentTime = String(timeBuffer);
 
       // Affiche la date et l'heure dans la console pour débogage
-      //Serial.print("Date : ");
-      //Serial.println(currentDate);
-      //Serial.print("Heure (avec décalage) : ");
-      //Serial.println(currentTime);
+      Serial.print("Date : ");
+      Serial.println(currentDate);
+      Serial.print("Heure (avec décalage) : ");
+      Serial.println(currentTime);
     }
+  } else {
+    Serial.println("Aucune donnée GPS disponible.");
   }
 }
 
