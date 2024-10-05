@@ -25,14 +25,14 @@ void initGPS() {
 // Fonction de mise à jour des données GPS sans blocage
 void updateGPSData() {
   // Vérifie si des données sont disponibles depuis le GPS
-  Serial.println("Mise à jour des données GPS...");
   if (SerialGPS.available() > 0) {
-    Serial.println("Données GPS disponibles");
     // Lire les données GPS et les traiter
-    gps.encode(SerialGPS.read());
+    while (SerialGPS.available()) {
+      gps.encode(SerialGPS.read());
+    }
 
     // Si une nouvelle position est disponible, met à jour les informations GPS
-    if (gps.location.isUpdated()) {
+    if (gps.location.isValid()) {
       currentLatitude = gps.location.lat();
       currentLongitude = gps.location.lng();
       currentSpeed = gps.speed.kmph();
@@ -47,17 +47,19 @@ void updateGPSData() {
       Serial.println(currentSpeed);
       Serial.print("Altitude (m) : ");
       Serial.println(currentAltitude);
+    } else {
+      Serial.println("Position non disponible");
     }
 
     // Mise à jour du nombre de satellites
-    if (gps.satellites.isUpdated()) {
+    if (gps.satellites.isValid()) {
       currentSatellites = gps.satellites.value();
       Serial.print("Satellites : ");
       Serial.println(currentSatellites);
     }
 
     // Met à jour la date et l'heure si disponibles
-    if (gps.date.isUpdated() && gps.time.isUpdated()) {
+    if (gps.date.isValid() && gps.time.isValid()) {
       char dateBuffer[11];  // Stockage temporaire pour la date formatée
       sprintf(dateBuffer, "%02d/%02d/%04d", gps.date.day(), gps.date.month(), gps.date.year());
       currentDate = String(dateBuffer);
@@ -79,6 +81,8 @@ void updateGPSData() {
       Serial.println(currentDate);
       Serial.print("Heure (avec décalage) : ");
       Serial.println(currentTime);
+    } else {
+      Serial.println("Date/heure non disponibles");
     }
   } else {
     Serial.println("Aucune donnée GPS disponible.");

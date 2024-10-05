@@ -11,7 +11,7 @@
 #include <TinyGPS++.h>     // Bibliothèque GPS
 #include "log.h"           // Inclure le fichier log pour la journalisation
 #include "gestion_timer.h" // Inclure la gestion des timers (ajout)
-
+#include "boot.h" // Inclure le fichier
 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
@@ -38,7 +38,7 @@ unsigned long previousMillisDebug = 0;
 unsigned long previousMillisTemp = 0;
 unsigned long previousMillisGPSAndLog = 0;  // Utilisé pour la mise à jour GPS et log
 unsigned long previousMillisTimers = 0;  // Utilisé pour l'enregistrement des timers dans le CSV
-
+bool sdWasAvailable = true;
 const long intervalDebug = 1000;   // Intervalle pour actualiser le menu debug
 const long intervalTemp = 10000;   // Intervalle pour actualiser la température
 const long intervalGPSAndLog = 5000;  // Intervalle combiné pour GPS et log (toutes les 5 secondes)

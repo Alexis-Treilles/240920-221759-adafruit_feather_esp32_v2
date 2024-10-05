@@ -25,7 +25,7 @@ extern bool deviceConnected;     // Statut de la connexion Bluetooth
 extern bool buttonPreviousPressed;
 extern bool buttonPlayPausePressed;
 extern bool buttonNextPressed;
-
+extern bool sdwareAvailable;     // Statut de la carte SD
 extern String currentDriver;  // Déclarer currentDriver comme chaîne de caractères
 extern String currentTime;       // Heure actuelle sous forme de chaîne
 extern String currentDate;
