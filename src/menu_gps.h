@@ -7,7 +7,7 @@
 void displayGPS() {
   // Affichage du menu GPS
   tft.fillScreen(TFT_BLACK); // Effacer l'écran
-  
+  drawEntete();
   
   tft.setTextColor(TFT_WHITE);
   tft.setCursor(50, 50);

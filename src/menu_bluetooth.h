@@ -27,7 +27,7 @@ Button btnNext(BUTTON_X_START + 2 * (BUTTON_W + BUTTON_SPACING), BUTTON_Y_START,
 void displayBluetooth() {
   currentPage = PAGE_BLUETOOTH;
   tft.fillScreen(TFT_BLACK); // Effacer l'écran
-
+  drawEntete();
   // Vérifier l'état de la connexion Bluetooth
   checkBluetoothConnection();
 

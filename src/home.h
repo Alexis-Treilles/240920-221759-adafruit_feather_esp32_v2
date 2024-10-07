@@ -27,7 +27,7 @@ Button btnFeatures = {192, 165, 122, 75, "Features"};
 void displayHome() {
   currentPage = PAGE_HOME;
   tft.fillScreen(TFT_BLACK); // Effacer l'écran
-
+  drawEntete();
   // Dessiner les boutons
   drawButton(tft, btnRoulage);
   drawButton(tft, btnBluetooth);

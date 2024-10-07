@@ -14,6 +14,9 @@ struct Button {
   // Constructeur avec couleur par défaut (TFT_BLUE)
   Button(uint16_t _x, uint16_t _y, uint16_t _w, uint16_t _h, const char* _label, uint16_t _color = TFT_BLUE)
       : x(_x), y(_y), w(_w), h(_h), label(_label), isPressed(false), lastPressed(0), color(_color) {}
+  void setLabel(const char* newLabel) {
+    label = newLabel;  // Met à jour l'étiquette
+  }
 };
 
 // Fonction pour dessiner un bouton arrondi avec texte centré
