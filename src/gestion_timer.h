@@ -12,6 +12,9 @@ unsigned long timerRobin = 0;
 unsigned long timerDaily = 0;
 unsigned long timerTotal = 0;
 
+// Variables pour stocker la dernière heure enregistrée
+unsigned long previousTimeInSeconds = 0;
+
 // Variable pour la gestion du conducteur actuel
 extern String driverName;  // Utilise la variable globale "driverName" définie ailleurs
 
@@ -26,38 +29,19 @@ String formatTime(unsigned long seconds) {
   return String(buffer);
 }
 
-// Fonction pour ajouter du temps au bon timer
-void updateTimers() {
-  // Ajoute du temps au timer correspondant
-  if (driverName == "Alexis") {
-    timerAlexis += 300;  // Ajoute 5 minutes (300 secondes)
-  } else if (driverName == "Robin") {
-    timerRobin += 300;   // Ajoute 5 minutes (300 secondes)
-  }
-
-  // Ajoute du temps aux timers "daily" et "total"
-  timerDaily += 300;
-  timerTotal += 300;
+// Fonction pour calculer l'heure en secondes (à partir d'une chaîne de type "hh:mm:ss")
+unsigned long timeStringToSeconds(const String& timeStr) {
+  int hour = timeStr.substring(0, 2).toInt();
+  int minute = timeStr.substring(3, 5).toInt();
+  int second = timeStr.substring(6, 8).toInt();
+  return hour * 3600 + minute * 60 + second;
 }
 
-// Fonction d'initialisation des timers
-void initTimers() {
-  // Vérifie si le fichier CSV existe déjà
-  if (!SD.exists("/timers.csv")) {
-    // Si le fichier n'existe pas, on le crée
-    File file = SD.open("/timers.csv", FILE_WRITE);
-    if (file) {
-      // Écrire l'en-tête dans le CSV
-      file.println("Date Heure,Timer Alexis,Timer Robin,Timer Daily,Timer Total");
-      file.close();
-    }
-    // Initialisation des timers à 0
-    timerAlexis = 0;
-    timerRobin = 0;
-    timerDaily = 0;
-    timerTotal = 0;
-  } else {
-    // Si le fichier existe, on récupère la dernière ligne pour initialiser les timers
+// Fonction pour récupérer la dernière heure enregistrée dans le CSV
+unsigned long getLastLoggedTimeInSeconds() {
+  unsigned long lastLoggedTimeInSeconds = 0;
+
+  if (SD.exists("/timers.csv")) {
     File file = SD.open("/timers.csv");
     if (file) {
       String lastLine;
@@ -66,30 +50,73 @@ void initTimers() {
       }
       file.close();
 
-      // Extraire les valeurs de la dernière ligne et les convertir en entiers
-      int lastComma1 = lastLine.indexOf(',');
-      int lastComma2 = lastLine.indexOf(',', lastComma1 + 1);
-      int lastComma3 = lastLine.indexOf(',', lastComma2 + 1);
-      int lastComma4 = lastLine.indexOf(',', lastComma3 + 1);
-
-      // Conversion des sous-chaînes en valeurs numériques pour chaque timer
-      timerAlexis = lastLine.substring(lastComma1 + 1, lastComma2).toInt();
-      timerRobin = lastLine.substring(lastComma2 + 1, lastComma3).toInt();
-      timerDaily = lastLine.substring(lastComma3 + 1, lastComma4).toInt();
-      timerTotal = lastLine.substring(lastComma4 + 1).toInt();
+      // Extraire l'heure de la dernière ligne et la convertir en secondes
+      int spaceIndex = lastLine.indexOf(' ');
+      String lastTimeStr = lastLine.substring(spaceIndex + 1, spaceIndex + 9);
+      lastLoggedTimeInSeconds = timeStringToSeconds(lastTimeStr);
     }
+  }
+  return lastLoggedTimeInSeconds;
+}
+
+// Fonction pour calculer la différence de temps entre l'heure actuelle et la dernière enregistrée
+unsigned long calculateElapsedTime() {
+  unsigned long currentTimeInSeconds = gps.time.hour() * 3600 + gps.time.minute() * 60 + gps.time.second();
+  unsigned long lastLoggedTimeInSeconds = getLastLoggedTimeInSeconds();
+
+  // Si on est passé de l'autre côté de minuit
+  if (currentTimeInSeconds < lastLoggedTimeInSeconds) {
+    return (86400 - lastLoggedTimeInSeconds) + currentTimeInSeconds;
+  }
+  return currentTimeInSeconds - lastLoggedTimeInSeconds;
+}
+
+// Fonction pour ajouter le temps écoulé au bon timer
+void updateTimers() {
+  if (gps.time.isValid()) {
+    // Calcul du temps écoulé
+    unsigned long elapsedTime = calculateElapsedTime();
+
+    // Ajouter ce temps aux timers du conducteur actuel
+    if (driverName == "Alexis") {
+      timerAlexis += elapsedTime;
+    } else if (driverName == "Robin") {
+      timerRobin += elapsedTime;
+    }
+
+    // Ajouter le temps écoulé aux timers "daily" et "total"
+    timerDaily += elapsedTime;
+    timerTotal += elapsedTime;
+
+    // Mettre à jour l'heure précédente en secondes
+    previousTimeInSeconds = gps.time.hour() * 3600 + gps.time.minute() * 60 + gps.time.second();
+  }
+}
+
+// Fonction d'initialisation des timers
+void initTimers() {
+  previousTimeInSeconds = getLastLoggedTimeInSeconds();  // Initialiser avec la dernière heure du fichier
+
+  if (!SD.exists("/timers.csv")) {
+    // Si le fichier n'existe pas, le créer et initialiser les timers
+    File file = SD.open("/timers.csv", FILE_WRITE);
+    if (file) {
+      file.println("Date Heure,Timer Alexis,Timer Robin,Timer Daily,Timer Total");
+      file.close();
+    }
+    timerAlexis = 0;
+    timerRobin = 0;
+    timerDaily = 0;
+    timerTotal = 0;
   }
 }
 
 // Fonction pour enregistrer les valeurs actuelles des timers dans le CSV toutes les 5 minutes
 void logTimers() {
-  // Ouvre le fichier CSV en mode ajout (append)
   File file = SD.open("/timers.csv", FILE_APPEND);
   if (file) {
-    // Utiliser la date et l'heure actuelles du GPS
     String dateTime = currentDate + " " + currentTime;  // Utiliser les variables GPS
 
-    // Écrire la date, l'heure et les valeurs des timers dans le CSV
     file.print(dateTime);
     file.print(',');
     file.print(formatTime(timerAlexis));
@@ -98,14 +125,14 @@ void logTimers() {
     file.print(',');
     file.print(formatTime(timerDaily));
     file.print(',');
-    file.println(formatTime(timerTotal));  // Ajoute un saut de ligne pour la prochaine entrée
+    file.println(formatTime(timerTotal));  // Ajoute un saut de ligne
 
-    file.close();  // Fermer le fichier après l'écriture
+    file.close();
   }
 }
 
 // Fonction pour réinitialiser les timers
-void resetTimer(const String &timerName) {
+void resetTimer(const String& timerName) {
   if (timerName == "Alexis") {
     timerAlexis = 0;
   } else if (timerName == "Robin") {

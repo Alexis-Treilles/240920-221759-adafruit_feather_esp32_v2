@@ -49,13 +49,19 @@ enum TimerToReset {
 
 // Fonction pour mettre à jour la valeur affichée des timers
 void updateTimerValues() {
-
-  // Met à jour les boutons avec les nouvelles valeurs des timers
+  // Met à jour les étiquettes des boutons avec les nouvelles valeurs des timers
   btnTimerAlexis.setLabel(timerValueAlexis.c_str());
   btnTimerRobin.setLabel(timerValueRobin.c_str());
   btnTimerJournalier.setLabel(timerValueJournalier.c_str());
   btnTimerTotal.setLabel(timerValueTotal.c_str());
+
+  // Redessiner les boutons pour que les nouvelles étiquettes apparaissent
+  drawButton(tft, btnTimerAlexis);
+  drawButton(tft, btnTimerRobin);
+  drawButton(tft, btnTimerJournalier);
+  drawButton(tft, btnTimerTotal);
 }
+
 
 // Affichage du menu Timer avec les boutons de noms, timers et réinitialisation
 void displayTimer() {
