@@ -130,6 +130,7 @@ void bootSetup() {
     displayImage();
     Serial.println("Initialisation des composants...");
     initGPS();
+    
     delay(500);
     initBluetooth();
     delay(500);

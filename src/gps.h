@@ -17,6 +17,8 @@ void initGPS() {
   Serial.println("Initialisation du GPS Neo-6M...");
   if (SerialGPS) {
     Serial.println("Port série GPS initialisé avec succès.");
+    tft.setCursor(50,220);
+  tft.println("GPS");
   } else {
     Serial.println("Échec de l'initialisation du port série GPS.");
   }
