@@ -15,6 +15,7 @@ void updateGPSData() {
   // Met à jour le nombre de satellites si valide
   if (gps.satellites.isValid()) {
     currentSatellites = gps.satellites.value();
+
   }
   
   // Met à jour la latitude et la longitude si valides
